@@ -96,6 +96,56 @@ BodyCacher.prototype._close = function() {
 //
 
 var BodyReader = function(path) {
+	this._fd = null;
+	this._path = path;
+	
+	this._resetTimer();
+	
+	try {
+		this._fd = fs.openSync(path, 'r');
+	} catch (e) {
+		console.log('Response cannot create body reader');
+	}
+};
+
+BodyReader.prototype.read = function(buffer, offset, length, position) {
+	if (this._fd) {
+		var read = fs.readSync(this._fd, buffer, offset, length, position);
+		this._resetTimer();
+		
+		if (read == 0)
+			this._cleanup();
+		
+		return read;
+	} else
+		return 0;
+};
+
+BodyReader.prototype.readAll = function(buffer, offset, length, position) {
+	if (this._fd) {
+		fs.closeSync(this._fd);
+		var data = fs.readFileSync(this._path);
+		this._cleanup();
+		return data;
+	} else
+		return '';
+};
+
+BodyReader.prototype._cleanup = function() {
+	try {
+		fs.closeSync(this._fd);
+	} catch (e) { }
+	try {	
+		fs.unlinkSync(this._path);
+		//console.log('deleted ' + this._path);
+	} catch (e) { }
+	clearTimeout(this._timer);
+};
+
+BodyReader.prototype._resetTimer = function() {	
+	this._timer = setTimeout(function() {
+		this._cleanup();
+	}.bind(this), 5000);
 };
 
 //
@@ -145,9 +195,12 @@ var Request = module.exports = function(nodeReq) {
 	}.bind(this));
 	
 	this._dataReceived = false;
+	this._bodyReader = null;
 	this._req.on('end', function() {
 		this._cacher.close(function() {
 			this._dataReceived = true;
+			this._bodyReader = new BodyReader(this._fileCachePath);
+			
 			this.emit('dataend');
 			this.emit('end');
 		}.bind(this));
@@ -162,7 +215,10 @@ util.inherits(Request, events.EventEmitter);
 
 var R = Request.prototype;
 
-R.__defineGetter__('dataPath', function() { return this._fileCachePath; });
+//R.__defineGetter__('dataPath', function() { return this._fileCachePath; });
+/**
+ * @param callback function(reader) { ... } where reader is a BodyReader (defined above)
+ */
 R.data = function(callback) {
 	if (!callback)
 		return;
@@ -170,10 +226,10 @@ R.data = function(callback) {
 	if (!this._dataReceived) {
 		this.on('dataend', function() {
 			//console.log('dataend:' + this.dataPath);
-			callback();
+			callback(this._bodyReader);
 		}.bind(this));
 	} else
-		callback();
+		callback(this._bodyReader);
 };
 
 R.__defineGetter__('method', function() { return this._req.method; });
