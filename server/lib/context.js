@@ -15,7 +15,7 @@ var Context = module.exports = function Context(request, response, matches) {
 		this.emit('load');
 	}.bind(this));
 	
-	this._request.on('end', function() {
+	this._response.on('end', function() {
 		this.emit('unload');
 	}.bind(this));
 };

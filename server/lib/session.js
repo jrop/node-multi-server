@@ -111,19 +111,9 @@ S.__reset = function() {
 	this.__setId();
 }
 
-S.__genHex = function(num) {
-	var chars = '0123456789abcdef';
-	var s = '';
-	for (var i = 0; i < num; ++i) {
-		var rand = Math.floor(Math.random() * 16);
-		s += chars.charAt(rand);
-	}
-	return s;
-}
-
 S.__setId = function() {
 	this._isEmpty = true;
-	this._id = this.__genHex(32);
+	this._id = Util.uuid().replace(/-/g, '');
 	this._store.checkid(this._id, function(isUnique) {
 		if (!isUnique)
 			this.__setId();
