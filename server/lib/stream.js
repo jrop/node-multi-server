@@ -25,7 +25,7 @@ var StringSource = function(str) {
 };
 
 var FileSource = function(path) {
-	this.fd = fs.openSync(path);
+	this.fd = fs.openSync(path, 'r');
 	
 	this.read = function(buff, offset, length, encoding) {
 		if (!offset) offset = 0;
@@ -50,31 +50,39 @@ var LineReader = function(stream) {
 	this.s = '';
 };
 
-LineReader.prototype.readLine = function() {
+LineReader.prototype.peekLine = function() {
 	var hasNewLine = this.__fill();
 	if (hasNewLine) {
 		var i = this.s.indexOf('\n');
 		var ln = this.s.substring(0, i);
-		this.s = this.s.substring(i + 1);
 		return ln;
 	} else {
-		if (s == '')
+		if (this.s == '')
 			return null;
 		else {
 			var ln = this.s;
-			this.s = '';
+			return ln;	
 		}
 	}
 };
 
+LineReader.prototype.readLine = function() {
+	var ln = this.peekLine();
+	if (ln) {
+		this.s = this.s.substring(ln.length + 1);
+		return ln;
+	}
+	return ln;
+};
+
 LineReader.prototype.__fill = function() {
-	while (s.indexOf('\n') == -1) {
+	while (this.s.indexOf('\n') == -1) {
 		var read = this.stream.readString(this.chunkSize);
 		this.s += read[0];
 		if (read[1] < this.chunkSize)
-			return false;
+			break;
 	};
-	return true;
+	return this.s.indexOf('\n') != -1;
 };
 
 var stream = {

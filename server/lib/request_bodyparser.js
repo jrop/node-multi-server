@@ -22,13 +22,47 @@ var stream = require('./stream.js');
 ////////////////////////
 // BEGIN MultipartParser
 ////////////////////////
-var MultipartParser = function() {
+var MultipartParser = function(req) {
 	//multipart/form-data
+	this._req = req;
 	this.params = { };
-	
-	this.parse = function(req) {
-		// TODO: ...
+
+	this.getBoundary = function(s) {
+		var start = s.indexOf('boundary=');
+		if (start != -1) {
+			start += 'boundary='.length;
+			var end = s.indexOf(';', start);
+			if (end == -1)
+				end = s.length;
+		
+			return s.substring(start, end);
+		}
+		return '';
 	};
+	
+	this.readSection = function(lr) {
+		var ln = '';
+		while((ln = lr.readLine())) {
+			console.log(ln);
+		}
+		//console.log(lr.peekLine());
+		console.log('done');
+	};
+	
+	this.parse = function(strm) {
+		var lr = new stream.LineReader(strm);
+		var sec = null;
+		while((sec = this.readSection(lr))) {
+			//console.log(sec);
+		}
+		console.log('DONE!');
+	};
+
+	// BEGIN read boundary
+	this._boundary = this.getBoundary(this._req.headers['content-type']);
+	console.log('the boundary is:');
+	console.log(this._boundary);
+	// END read boundary
 };
 //////////////////////
 // END MultipartParser
@@ -68,8 +102,8 @@ var UrlParser = function() {
 		if (this._name != '')
 			this.params[decodeURIComponent(this._name)] = decodeURIComponent(this._value);
 		
-		console.log(str);
-		console.log(this.params);
+		//console.log(str);
+		//console.log(this.params);
 	};
 };
 ////////////////
@@ -78,7 +112,7 @@ var UrlParser = function() {
 
 var BodyParser = function(req) {
 	this._req = req;
-	console.log(req.headers);
+	//console.log(req.headers);
 	var cl = this._req.headers['content-length'];
 	if (cl) {
 		var ct = this._req.headers['content-type'];
@@ -89,8 +123,9 @@ var BodyParser = function(req) {
 			
 			var cacher = new BodyCacher(this._req);
 			cacher.on('end', function() {
-				this.me._parser = new MultipartParser();
-				console.log(this.cacher.path);
+				this.me._parser = new MultipartParser(this.me._req);
+				//console.log(this.cacher.path);
+				//console.log(module);
 				this.me._parser.parse(stream.fromFile(this.cacher.path));
 				this.me.emit('parse');
 			}.bind({ cacher: cacher, me : this}));
