@@ -6,7 +6,7 @@ var events = require('events');
 var Util = require('./util.js');
 var Rotator = require('./rotator.js');
 var HeaderParser = require('./headerparser.js');
-var UploadedFile = require('./request_multipartparser_uploadedfile.js');
+var FileCacher = require('./stream_filecacher.js');
 var CachedFileReader = require('./stream_cachedfilereader.js');
 
 var MultipartParser = module.exports = function(req) {
@@ -106,7 +106,7 @@ MP.prototype.accumulate = function(buff) {
 								
 								this.isFile = true;
 								this.fieldName = cd.values.filename;
-								this.fieldValue = new UploadedFile(uuid);
+								this.fieldValue = new FileCacher(uuid);
 								
 								//console.log('starting file ' + this.fieldName);
 							} else {
