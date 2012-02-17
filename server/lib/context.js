@@ -9,11 +9,7 @@ var Context = module.exports = function Context(request, response, matches) {
 	this._matches = matches;
 	this._session = new Session(this);
 	
-	// load
-	this._session.load(function() {
-		this._loaded = true;
-		this.emit('load');
-	}.bind(this));
+	this.__load();
 	
 	this._response.on('end', function() {
 		this.emit('unload');
@@ -22,6 +18,22 @@ var Context = module.exports = function Context(request, response, matches) {
 
 util.inherits(Context, events.EventEmitter);
 
+Context.prototype.__load = function() {
+	if (!this._request.parsed)
+		this._request.on('parsed', function() {
+			this.__loadSession();
+		}.bind(this));
+	else
+		this.__loadSession();
+};
+
+Context.prototype.__loadSession = function() {
+	this._session.load(function() {
+		this._loaded = true;
+		this.emit('load');
+	}.bind(this));
+};
+			
 Context.prototype.__defineGetter__('loaded', function() { return this._loaded; });
 Context.prototype.__defineGetter__('request', function() { return this._request; });
 Context.prototype.__defineGetter__('response', function() { return this._response; });

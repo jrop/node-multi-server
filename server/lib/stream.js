@@ -44,7 +44,11 @@ var FileSource = function(path) {
 	};
 };
 
-var LineReader = function(stream) {
+var LineReader = function(stream, delim) {
+	if (!delim)
+		delim = '\n';
+	
+	this.delim = delim;
 	this.stream = stream;
 	this.chunkSize = 512;
 	this.s = '';
@@ -53,7 +57,7 @@ var LineReader = function(stream) {
 LineReader.prototype.peekLine = function() {
 	var hasNewLine = this.__fill();
 	if (hasNewLine) {
-		var i = this.s.indexOf('\n');
+		var i = this.s.indexOf(this.delim);
 		var ln = this.s.substring(0, i);
 		return ln;
 	} else {
@@ -69,20 +73,23 @@ LineReader.prototype.peekLine = function() {
 LineReader.prototype.readLine = function() {
 	var ln = this.peekLine();
 	if (ln) {
-		this.s = this.s.substring(ln.length + 1);
+		this.s = this.s.substring(ln.length + this.delim.length);
 		return ln;
 	}
 	return ln;
 };
 
 LineReader.prototype.__fill = function() {
-	while (this.s.indexOf('\n') == -1) {
+	while (this.s.indexOf(this.delim) == -1) {
 		var read = this.stream.readString(this.chunkSize);
 		this.s += read[0];
 		if (read[1] < this.chunkSize)
 			break;
 	};
-	return this.s.indexOf('\n') != -1;
+	console.log('BEGIN __fill:');
+	console.log(">'" + this.s + "'<");
+	console.log('END   __fill');
+	return this.s.indexOf(this.delim) != -1;
 };
 
 var stream = {

@@ -1,6 +1,6 @@
 var fs = require('fs');
 
-var BodyReader = function(path) {
+var CachedFileReader = function(path) {
 	this._fd = null;
 	this._path = path;
 	
@@ -13,7 +13,7 @@ var BodyReader = function(path) {
 	}
 };
 
-BodyReader.prototype.read = function(buffer, offset, length, position) {
+CachedFileReader.prototype.read = function(buffer, offset, length, position) {
 	if (this._fd) {
 		var read = fs.readSync(this._fd, buffer, offset, length, position);
 		this._resetTimer();
@@ -26,7 +26,7 @@ BodyReader.prototype.read = function(buffer, offset, length, position) {
 		return 0;
 };
 
-BodyReader.prototype.readAll = function(buffer, offset, length, position) {
+CachedFileReader.prototype.readAll = function() {
 	if (this._fd) {
 		fs.closeSync(this._fd);
 		var data = fs.readFileSync(this._path);
@@ -36,21 +36,22 @@ BodyReader.prototype.readAll = function(buffer, offset, length, position) {
 		return '';
 };
 
-BodyReader.prototype._cleanup = function() {
+CachedFileReader.prototype._cleanup = function() {
 	try {
 		fs.closeSync(this._fd);
 	} catch (e) { }
 	try {	
 		fs.unlinkSync(this._path);
-		//console.log('deleted ' + this._path);
+		console.log('deleted ' + this._path);
 	} catch (e) { }
 	clearTimeout(this._timer);
 };
 
-BodyReader.prototype._resetTimer = function() {	
+CachedFileReader.prototype._resetTimer = function() {	
 	this._timer = setTimeout(function() {
 		this._cleanup();
-	}.bind(this), 5000);
+	}.bind(this), 30000);
+	// TODO: make timeout time-span configurable; hard-coded 30 seconds for now
 };
 
-module.exports = BodyReader;
+module.exports = CachedFileReader;
