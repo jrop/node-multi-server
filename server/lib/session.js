@@ -92,7 +92,7 @@ var Session = module.exports = function(context, store) {
 			return;
 		
 		this._ctx.response.setCookie('sid', this._id, this._expires);
-		console.log(this._ctx.response._cookies);
+		//console.log(this._ctx.response._cookies);
 		this._store.cleanup();
 	}.bind(this));
 };

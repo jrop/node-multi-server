@@ -26,7 +26,18 @@ module.exports = {
 	stat : function(path) {
 		var fs = require('fs');
 		var stat = null;
-		try { fs.statSync(path); } catch(e) { }
+		try { stat = fs.statSync(path); } catch(e) { stat = null; }
 		return stat;
+	},
+	
+	uniqueFileName : function(path) {
+		var fs = require('fs');
+		var files = fs.readdirSync(path);
+		var fname = '';
+		do {
+			fname = module.exports.uuid();
+		} while (files.indexOf(fname) != -1);
+		return fname;
 	}
 };
+

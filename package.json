@@ -1,0 +1,7 @@
+{
+	"name" : "node-multi-server",
+	"version" : "0.0.1",
+	"description" : "A multi-host server with cookie and session built-in.",
+	"keywords" : "server multiple host cookie cookies session sessions",
+	"main" : "./server/lib/index.js"
+}

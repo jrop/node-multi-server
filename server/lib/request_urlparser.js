@@ -10,6 +10,7 @@ var UrlParser = module.exports = function() {
 	};
 	
 	this.parse = function(str) {
+		//console.log('request body:>\'' + str + '\'<');
 		for (var i = 0; i < str.length; ++i) {
 			var c = str.charAt(i);
 			if (c == '=' || c == '&') {
@@ -24,12 +25,11 @@ var UrlParser = module.exports = function() {
 				this['_' + this._state] += c;
 			}
 		}
-		if (c != '=' && c != '&')
-			this['_' + this._state] += c;
-		if (this._name != '')
-			this.params[decodeURIComponent(this._name)] = decodeURIComponent(this._value);
-		
-		//console.log(str);
+		if (c != '&') {
+			//this['_' + this._state] += c;
+			if (this._name != '')
+				this.params[decodeURIComponent(this._name.replace(/\+/g, ' '))] = decodeURIComponent(this._value.replace(/\+/g, ' '));
+		}
 		//console.log(this.params);
 	};
 };

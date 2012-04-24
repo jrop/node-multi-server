@@ -12,6 +12,9 @@ var Request = module.exports = function(nodeReq) {
 	
 	this.__bodyParsed = function(params) {
 		this._params = params;
+		if (!this._params.files)
+			this._params.files = [ ];
+		
 		this._parsed = true;
 		this.emit('parsed');
 	};

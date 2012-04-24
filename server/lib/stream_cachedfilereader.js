@@ -1,8 +1,9 @@
 var fs = require('fs');
 
-var CachedFileReader = function(path) {
+var CachedFileReader = function(path, name) {
 	this._fd = null;
 	this._path = path;
+	this._name = name;
 	
 	this._resetTimer();
 	
@@ -36,6 +37,21 @@ CachedFileReader.prototype.readAll = function() {
 		return '';
 };
 
+/**
+ * callback: the same callback as require('util').pump
+ */
+CachedFileReader.prototype.moveTo = function(path, callback) {
+	require('util').pump(
+		fs.createReadStream(this._path),
+		fs.createWriteStream(path),
+		function() {
+			this.me._cleanup();
+			if (this.callback)
+				this.callback();
+		}.bind({me: this, callback: callback})
+	);
+};
+
 CachedFileReader.prototype._cleanup = function() {
 	try {
 		fs.closeSync(this._fd);
@@ -54,4 +70,9 @@ CachedFileReader.prototype._resetTimer = function() {
 	// TODO: make timeout time-span configurable; hard-coded 30 seconds for now
 };
 
+CachedFileReader.prototype.__defineGetter__('name', function() {
+	return this._name;
+});
+
 module.exports = CachedFileReader;
+
