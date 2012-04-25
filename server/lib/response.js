@@ -27,27 +27,40 @@ R._setCookieHeader = function() {
 	var list = [];
 	var cookies = this._cookies;
 	for (var mbr in cookies) {
-		var val = cookies[mbr].value;
-		var expires = cookies[mbr].expires;
+		var cookie = cookies[mbr];
+		
+		var val = cookie.value;
+		var expires = cookie.expires;
 	
 		var s = encodeURIComponent(mbr) + '=' + encodeURIComponent(val) + '; ';
 		if (expires) {
 			s += 'Expires=';
 			if (expires.toUTCString)
-				s += expires.toUTCString();
+				s += expires.toUTCString() + '; ';
 			else
-				s += expires;
+				s += expires + '; ';
 		}
+		
+		if (cookie.domain != undefined)
+			s += 'Domain=' + cookie.domain + '; ';
+		if (cookie.path != undefined)
+			s += 'Path=' + cookie.path + '; ';
+		if (cookie.secure == true)
+			s += 'Secure; ';
+		if (cookie.httpOnly == true)
+			s += 'HttpOnly';
+		
 		list.push(s);
 	}
+	
 	//console.log('Cookies:');
 	//console.log(list);
 	//console.log('---End Setting Cookie Header---');
 	this._resp.setHeader('Set-Cookie', list);
 };
 
-R.setCookie = function(name, value, expires) {
-	this._cookies[name] = { value: value, expires: expires };
+R.setCookie = function(name, value, expires, domain, path, httpOnly, secure) {
+	this._cookies[name] = { value: value, expires: expires, domain: domain, path: path, secure: secure, httpOnly: httpOnly };
 	//console.log('---Setting cookie, headers sent?: ' + this._headersSent + '---');
 	//console.log(this._cookies);
 	//console.log('---End Setting cookie---');

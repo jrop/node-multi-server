@@ -21,10 +21,15 @@ util.inherits(Context, events.EventEmitter);
 Context.prototype.__load = function() {
 	if (!this._request.parsed)
 		this._request.on('parsed', function() {
-			this.__loadSession();
+			this.__checkLoaded();
 		}.bind(this));
 	else
-		this.__loadSession();
+		this.__checkLoaded();
+		
+	this._session.load(function(err) {
+		console.log('Session.load callback called');
+		this.__checkLoaded();
+	}.bind(this));
 };
 
 Context.prototype.__loadSession = function() {
@@ -33,8 +38,21 @@ Context.prototype.__loadSession = function() {
 		this.emit('load');
 	}.bind(this));
 };
+
+Context.prototype.__checkLoaded = function() {
+	if (this.loaded) {
+		this.emit('load');
+	}
+};
 			
-Context.prototype.__defineGetter__('loaded', function() { return this._loaded; });
+Context.prototype.__defineGetter__('loaded', function() {
+	/*console.log('==Context.loaded==');
+	console.log(this._request.parsed);
+	console.log(this._session.loaded);
+	console.log('==^^^^^^^^^^^^^^==\n');*/
+	return this._request.parsed && this._session.loaded;
+});
+
 Context.prototype.__defineGetter__('request', function() { return this._request; });
 Context.prototype.__defineGetter__('response', function() { return this._response; });
 Context.prototype.__defineGetter__('matches', function() { return this._matches; });
