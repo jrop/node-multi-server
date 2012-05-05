@@ -27,7 +27,7 @@ Context.prototype.__load = function() {
 		this.__checkLoaded();
 		
 	this._session.load(function(err) {
-		console.log('Session.load callback called');
+		//console.log('Session.load callback called');
 		this.__checkLoaded();
 	}.bind(this));
 };

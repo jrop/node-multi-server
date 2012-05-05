@@ -30,15 +30,13 @@ R._setCookieHeader = function() {
 		var cookie = cookies[mbr];
 		
 		var val = cookie.value;
-		var expires = cookie.expires;
-	
 		var s = encodeURIComponent(mbr) + '=' + encodeURIComponent(val) + '; ';
-		if (expires) {
+		if (cookie.expires) {
 			s += 'Expires=';
-			if (expires.toUTCString)
-				s += expires.toUTCString() + '; ';
+			if (cookie.expires.toUTCString)
+				s += cookie.expires.toUTCString() + '; ';
 			else
-				s += expires + '; ';
+				s += cookie.expires + '; ';
 		}
 		
 		if (cookie.domain != undefined)
@@ -59,8 +57,9 @@ R._setCookieHeader = function() {
 	this._resp.setHeader('Set-Cookie', list);
 };
 
-R.setCookie = function(name, value, expires, domain, path, httpOnly, secure) {
-	this._cookies[name] = { value: value, expires: expires, domain: domain, path: path, secure: secure, httpOnly: httpOnly };
+R.setCookie = function(name, value, params) {
+	params.value = value;
+	this._cookies[name] = params;
 	//console.log('---Setting cookie, headers sent?: ' + this._headersSent + '---');
 	//console.log(this._cookies);
 	//console.log('---End Setting cookie---');
@@ -74,7 +73,7 @@ R.getCookie = function(name) {
 };
 
 R.deleteCookie = function(name) {
-	this.setCookie(name, '', new Date(0));
+	this.setCookie(name, '', { expires: new Date(0) });
 };
 
 R.write = function(chunk, encoding) {

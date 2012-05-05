@@ -92,7 +92,11 @@ var Session = module.exports = function(context, store) {
 		if (this._isEmpty)
 			return;
 		
-		this._ctx.response.setCookie('sid', this._id, this._expires, undefined, '/', true, false);
+		this._ctx.response.setCookie('sid', this._id, {
+			expires: this._expires, 
+			path: '/', 
+			httpOnly: true
+		});
 		//console.log(this._ctx.response._cookies);
 		this._store.cleanup();
 	}.bind(this));
