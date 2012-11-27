@@ -134,7 +134,7 @@ MP.prototype.__cleanupFields = function() {
 			//console.log(this.fieldValue);
 			//console.log('closing file ' + this.fieldName);
 			this.fieldValue.end();
-			var reader = new CachedFileReader(this.fieldValue.path, this.fieldName);
+			var reader = new CachedFileReader(this.fieldValue.path, decodeURIComponent(this.fieldName));
 			this.params.files.push(reader);
 		} else
 			this.params[this.fieldName] = this.fieldValue;
