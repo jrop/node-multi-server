@@ -1,6 +1,6 @@
 function Host(config) {
 	this.paths = new Array();
-	this.defaultResponder = require('./defaultresponder.js');
+	this.defaultResponder = require('./defaultresponder.js').default;
 	
 	this.addPath = function(pathRegex, responder) {
 		if (typeof pathRegex == typeof '')

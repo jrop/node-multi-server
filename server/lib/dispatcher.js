@@ -76,7 +76,7 @@ function Dispatcher() {
 		var host = this.lookupHost(request.headers.host);
 		if (host != undefined) {
 			var obj = host.lookup(req.url);
-			if (obj != null) {
+			if (obj && typeof obj.responder == 'function') {
 				try {
 					this.__respond(obj.responder, req, resp, obj.matches);
 				} catch (ex) {
