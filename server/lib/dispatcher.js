@@ -18,8 +18,8 @@ function Dispatcher() {
 		console.log(ex.stack);
 	};
 	
-	this.__respond = function(responder, request, response, matches) {
-		var context = new Context(request, response, matches);
+	this.__respond = function(responder, request, response, arguments) {
+		var context = new Context(request, response, arguments);
 		if (!context.loaded) {
 			context.on('load', function() {
 				responder(context);
@@ -78,7 +78,7 @@ function Dispatcher() {
 			var obj = host.lookup(req.url);
 			if (obj && typeof obj.responder == 'function') {
 				try {
-					this.__respond(obj.responder, req, resp, obj.matches);
+					this.__respond(obj.responder, req, resp, obj.arguments);
 				} catch (ex) {
 					this.__error(req, resp, ex);
 				}
