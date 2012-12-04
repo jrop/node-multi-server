@@ -58,6 +58,7 @@ R._setCookieHeader = function() {
 };
 
 R.setCookie = function(name, value, params) {
+	if (!params) params = { };
 	params.value = value;
 	this._cookies[name] = params;
 	//console.log('---Setting cookie, headers sent?: ' + this._headersSent + '---');
