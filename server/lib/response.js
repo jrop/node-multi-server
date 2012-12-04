@@ -100,6 +100,14 @@ R.setHeader = function(name, value) {
 		this._resp.setHeader(name, value);
 };
 
+R.getHeader = function(name) {
+	var regex = new Regex('^' + name + '$', 'i');
+	for (var hdr in this._resp.headers) {
+		if (regex.test(hdr))
+			return this._resp.headers[hdr];
+	}
+};
+
 R.redirect = function(path) {
 	this.statusCode = 302;
 	this.setHeader('Location', path);

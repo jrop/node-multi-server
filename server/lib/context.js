@@ -2,11 +2,11 @@ var Session = require('./session.js');
 var util = require('util');
 var events = require('events');
 
-var Context = module.exports = function Context(request, response, matches) {
+var Context = module.exports = function Context(request, response, arguments) {
 	this._loaded = false;
 	this._request = request;
 	this._response = response;
-	this._matches = matches;
+	this._arguments = arguments;
 	this._session = new Session(this);
 	
 	this.__load();
@@ -55,6 +55,6 @@ Context.prototype.__defineGetter__('loaded', function() {
 
 Context.prototype.__defineGetter__('request', function() { return this._request; });
 Context.prototype.__defineGetter__('response', function() { return this._response; });
-Context.prototype.__defineGetter__('matches', function() { return this._matches; });
+Context.prototype.__defineGetter__('arguments', function() { return this._arguments; });
 Context.prototype.__defineGetter__('session', function() { return this._session; });
 
