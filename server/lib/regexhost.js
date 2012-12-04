@@ -19,7 +19,7 @@ function RegexHost(config) {
 		for (var i = 0; i < this.paths.length; ++i) {
 			var match = this.paths[i].path.exec(path);
 			if (match != null)
-				return { matches : match, responder : this.paths[i].responder };
+				return { arguments : match, responder : this.paths[i].responder };
 		}
 		return null;
 	};
