@@ -18,8 +18,8 @@ FsHost.__stat = function(path) {
 	}
 };
 
-FsHost.prototype.__fileResponder = function(ctx) {
-	function respondWithDefault(ctx, host) {
+FsHost.prototype.__fileResponder = function(stat, host, ctx) {
+	function respondWithDefault() {
 		var def = host.getDefaultResponder();
 		if (def)
 			def(ctx);
@@ -28,35 +28,38 @@ FsHost.prototype.__fileResponder = function(ctx) {
 	}
 	
 	// by the time this get's called, it's not really in an instance of FsHost
-	// 'this' is set to include the locals 'path', and 'thiz' (points to instance of FsHost)
-	var controller_result = { };
 	var controller = undefined;
 	var controller_args = ctx.arguments || [ ];
 	
-	var cstat = FsHost.__stat(this.path + '.js') || FsHost.__stat(this.path + '/index.js');
-	if (cstat) {
-		// call controller
-		var pathmod = require('path');
-		var pathToMod = pathmod.resolve(process.cwd() + '/' + cstat.path);
-		
-		delete require.cache[pathToMod]; // unload module (if it's already been loaded)
-		controller = require(pathToMod);
-		
-		if (controller) {
-			if ((controller_args.length > 0) && !controller.acceptsArgs) {
-				// not cool: trying to send args to a controller that doesn't accept them
-				respondWithDefault(ctx, this.thiz);
-				return;
-			}
-		
-			if (typeof controller == 'function')
-				controller_result = controller.request(ctx);
-			else if (typeof controller.request == 'function')
-				controller_result = controller.request(ctx);
-			else
-				controller_result = controller;
+	// call controller
+	var path = require('path');
+	var pathToMod = path.resolve(process.cwd() + '/' + stat.path);
+	
+	// make sure caching is up to date:
+	if (require.cache[pathToMod]) {
+		var tm = require.cache[pathToMod].time;
+		if (stat.mtime.getTime() > tm) {
+			// modified since last cache...
+			delete require.cache[pathToMod]; // unload module (if it's already been loaded)
 		}
 	}
+	
+	controller = require(pathToMod);
+	require.cache[pathToMod].time = new Date().getTime(); // update access time
+	
+	if (controller) {
+		if ((controller_args.length > 0) && !controller.acceptsArgs) {
+			// not cool: trying to send args to a controller that doesn't accept them
+			respondWithDefault();
+			return;
+		}
+	
+		if (typeof controller == 'function')
+			controller(ctx); // finally!, we actually call the function...
+		else
+			respondWithDefault();
+	} else
+		respondWithDefault();
 };
 
 FsHost.prototype.__getResponderObjFor = function(path, args) {
@@ -73,7 +76,14 @@ FsHost.prototype.__getResponderObjFor = function(path, args) {
 			return undefined;
 		} else if (stat.isFile()) {
 			// return file responder
-			return { responder: this.__fileResponder.bind({ path: path, thiz: this }), arguments: args };
+			return {
+				responder: this.__fileResponder.bind(
+						null,
+						stat,
+						this
+					),
+				arguments: args
+			};
 		}
 	}
 	
