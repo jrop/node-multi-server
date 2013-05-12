@@ -20,18 +20,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-String.prototype.endsWith = function(str) {
-	return this.indexOf(str) == this.length - str.length;
-};
+module.exports = function(path) {
+	var stat = undefined;
+	try {
+		var stat = fs.statSync(path);
+	} catch (ex) { }
 
-module.exports = {
-	Config: require('./config.js'),
-	Context : require('./context.js'),
-	Dispatcher : require('./dispatcher.js'),
-	Host : require('./host.js'),
-	Session : require('./session.js'),
-	Request : require('./request.js'),
-	Response : require('./response.js'),
-	Util : require('./util.js'),
+	// make sure caching is up to date:
+	if (require.cache[path]) {
+		var tm = require.cache[path].time;
+		if (stat && tm && stat.mtime.getTime() > tm) {
+			// modified since last cache...
+			delete require.cache[path]; // unload module (if it's already been loaded)
+		}
+	}
+	
+	return require(path);
 };
-

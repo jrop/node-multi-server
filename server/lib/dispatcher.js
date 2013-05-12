@@ -35,19 +35,23 @@ function Dispatcher() {
 	this.__defaultResponder = require('./defaultresponder.js');
 	
 	this.__error = function (request, response, ex) {
-		this.__respond(this.__defaultResponder.error, request, response, null);
+		this.__respond(this.__defaultResponder.error, request, response, ex);
 		console.log(ex.message);
 		console.log(ex.stack);
 	};
 	
 	this.__respond = function(responder, request, response, arguments) {
 		var context = new Context(request, response, arguments);
+		function callResponder() {
+			responder(context);
+		}
+		
 		if (!context.loaded) {
 			context.on('load', function() {
-				responder(context);
+				callResponder();
 			});
 		} else
-			responder(context);
+			callResponder();
 	};
 	
 	this.addHost = function(pattern, host) {
@@ -106,13 +110,13 @@ function Dispatcher() {
 				}
 			} else {
 				try {
-					this.__respond(host.getDefaultResponder(req.headers.host), req, resp, null);
+					this.__respond(host.getDefaultResponder(req.headers.host).responder, req, resp, null);
 				} catch (ex) {
 					this.__error(req, resp, ex);
 				}
 			}
 		} else {
-			this.__respond(this.__defaultResponder.default, req, resp, null);
+			this.__respond(this.__defaultResponder.responder, req, resp, null);
 		}
 	};
 	

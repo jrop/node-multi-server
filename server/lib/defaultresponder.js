@@ -21,15 +21,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
 module.exports = {
-	default : function(ctx) {
-		ctx.response.write('Default responder');
+	responder : function(ctx) {
+		ctx.response.statusCode = 404;
+		ctx.response.setHeader('Content-Type', 'text/html');
+		ctx.response.write('<h1>Not Found</h1>');
 		ctx.response.end();
 	},
 	
 	error : function(ctx) {
 		try {
 			ctx.response.statusCode = 500;
-			ctx.response.write('<h3>Internal Server Error</h3>');
+			ctx.response.setHeader('Content-Type', 'text/html');
+			ctx.response.write('<h1>Internal Server Error</h1>');
+			
+			if (require('./config.js').get('Error.showStackTrace') === true) {
+				ctx.response.write('<pre><code>' + ctx.arguments.stack + '</pre></code>');
+			}
+			
 			ctx.response.end();
 		} catch (ex) {
 		}

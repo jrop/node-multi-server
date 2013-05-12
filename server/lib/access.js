@@ -20,18 +20,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
-String.prototype.endsWith = function(str) {
-	return this.indexOf(str) == this.length - str.length;
-};
+var liveRequire = require('./live_require.js');
 
-module.exports = {
-	Config: require('./config.js'),
-	Context : require('./context.js'),
-	Dispatcher : require('./dispatcher.js'),
-	Host : require('./host.js'),
-	Session : require('./session.js'),
-	Request : require('./request.js'),
-	Response : require('./response.js'),
-	Util : require('./util.js'),
-};
+/*
+ * @param path: path to .req.js 'live' module; it is assumed 'path' is a path to a file that exists
+ */
+function Access(path, rootPath) {
+	/*if (typeof mod == 'function') {
+		// mod is a .req.js module
+		mod = mod.access;
+	}
+	
+	this.__access = mod;*/
+}
+
+Access.prototype.check = function(ctx) {
+	//if (((ctx.arguments || []).length > 0) && !controller.acceptsArgs) {
+		// not cool: trying to send args to a controller that doesn't accept them
+	//	return false;
+	//}
+	return true;
+}
+
+module.exports = Access;
 
