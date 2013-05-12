@@ -27,7 +27,8 @@ var liveRequire = require('./live_require.js');
 var Access = require('./access.js');
 
 function Host(rootPath) {
-	this.__rootPath = rootPath;
+	var path = require('path');
+	this.__rootPath = path.resolve(rootPath);
 	this.defaultResponder = require('./defaultresponder.js');
 }
 
@@ -48,7 +49,7 @@ Host.__stat = function(path) {
 		return undefined;
 	}
 };
-
+	
 Host.prototype.__fileResponder = function(stat, host, ctx) {
 	function respondWithDefault() {
 		var def = host.getDefaultResponder();
@@ -64,25 +65,26 @@ Host.prototype.__fileResponder = function(stat, host, ctx) {
 	
 	// call controller
 	var path = require('path');
-	var pathToMod = path.resolve(process.cwd() + '/' + stat.path);
+	var pathToMod = stat.path;//path.resolve(process.cwd() + '/' + stat.path);
 	
 	controller = liveRequire(pathToMod);
-	require.cache[pathToMod].time = new Date().getTime(); // update access time
 	
 	if (controller) {
 		if (typeof controller == 'function') {
-			var access = new Access(pathToMod, this.__rootPath);
-			if (!access.check(ctx)) {
-				respondWithDefault();
-			} else {
-				// finally!, we actually call the function...
-				var currDir = process.cwd();
-				process.chdir(path.dirname(stat.path));
+			var access = new Access(pathToMod, host.__rootPath);
+			access.check(ctx, function (ok) {
+				if (!ok)
+					respondWithDefault();
+				else {
+					// finally!, we actually call the function...
+					var currDir = process.cwd();
+					process.chdir(path.dirname(stat.path));
 			
-				controller(ctx);
+					controller(ctx);
 			
-				process.chdir(currDir);
-			}
+					process.chdir(currDir);
+				}
+			});
 		} else
 			respondWithDefault();
 	} else
@@ -117,9 +119,16 @@ Host.prototype.__getResponderObjFor = function(path, args) {
 				};
 			} else {
 				// else just serve the file directly
+				var host = this;
 				return {
 					responder: function(ctx) {
-						require('./dispatcher.js').serveFile(stat.path, ctx);
+						var access = new Access(stat.path, host.__rootPath);
+						access.check(ctx, function(ok) {
+							if (ok)
+								require('./dispatcher.js').serveFile(stat.path, ctx);
+							else
+								host.getDefaultResponder().responder(ctx);
+						});
 					}
 				};
 			}

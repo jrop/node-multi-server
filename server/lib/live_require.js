@@ -20,7 +20,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
+var fs = require('fs');
+
 module.exports = function(path) {
+	path = require('path').resolve(path);
+	
 	var stat = undefined;
 	try {
 		var stat = fs.statSync(path);
@@ -29,11 +33,14 @@ module.exports = function(path) {
 	// make sure caching is up to date:
 	if (require.cache[path]) {
 		var tm = require.cache[path].time;
+		
 		if (stat && tm && stat.mtime.getTime() > tm) {
 			// modified since last cache...
 			delete require.cache[path]; // unload module (if it's already been loaded)
 		}
 	}
 	
-	return require(path);
+	var mod = require(path);
+	require.cache[path].time = new Date().getTime(); // update access time
+	return mod;
 };

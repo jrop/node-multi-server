@@ -20,26 +20,70 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE. */
 
+var _path = require('path');
+
 var liveRequire = require('./live_require.js');
+var Host = {};
+var Config = require('./config.js');
 
 /*
  * @param path: path to .req.js 'live' module; it is assumed 'path' is a path to a file that exists
  */
 function Access(path, rootPath) {
-	/*if (typeof mod == 'function') {
-		// mod is a .req.js module
-		mod = mod.access;
+	path = _path.resolve(path);
+	rootPath = _path.resolve(rootPath);
+	
+	Host = require('./host.js');
+	this.__accessObj = {};
+	
+	var stat = Host.__stat(path);
+	if (stat.path.endsWith(Config.get('Host.scriptExtension'))) {
+		this.__mod = liveRequire(stat.path);
+		if (typeof this.__mod == 'function' /* is script-file */ && this.__mod.access /* has access-object */)
+			this.__accessObj = this.__mod.access;
 	}
 	
-	this.__access = mod;*/
+	var currPath = path;
+	do {
+		currPath = _path.dirname(currPath);
+		stat = Host.__stat(currPath + '/.access' + Config.get('Host.scriptExtension'));
+		if (stat) {
+			this.__mergeIn(liveRequire(stat.path));
+		}
+	} while (currPath != rootPath);
 }
 
-Access.prototype.check = function(ctx) {
-	//if (((ctx.arguments || []).length > 0) && !controller.acceptsArgs) {
-		// not cool: trying to send args to a controller that doesn't accept them
-	//	return false;
-	//}
-	return true;
+Access.prototype.__mergeIn = function(accessObj) {
+	// this only works merging single-level objects in
+	// (what if member b.x has new "sub-members" not in a.x?
+	// this will say: oh, a already has x, so don't overwrite it.
+	// not sure if that's a problem, because the access object
+	// should really be a simple configuration object.)
+	for (var mbr in accessObj) {
+		if (!(mbr in this.__accessObj))
+			this.__accessObj[mbr] = accessObj[mbr];
+	}
+}
+
+Access.prototype.check = function(ctx, callback) {
+	callback = (typeof callback == 'function') ? callback : function() {};
+	//console.log('Checking:');
+	//console.log(this.__accessObj);
+	if (((ctx.arguments || []).length > 0) && !this.__accessObj.acceptsArgs) {
+		// not cool: trying to send args to a script that doesn't accept them
+		callback(false);
+	}
+	
+	if (this.__accessObj.deny)
+		callback(false);
+	
+	if (typeof this.__accessObj.check == 'function') {
+		this.__accessObj.check(ctx, function(ok) {
+			if (!ok) callback(false);
+		});
+	}
+		
+	callback(true);
 }
 
 module.exports = Access;
